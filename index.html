@@ -1,0 +1,2949 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Спектр — Программа лояльности</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: #0a0a12;
+      min-height: 100vh;
+      display: flex;
+      padding: 20px;
+      background-image: 
+        radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 50%, rgba(9, 132, 227, 0.08) 0%, transparent 60%);
+    }
+
+    .app-container {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      gap: 20px;
+      position: relative;
+    }
+
+    .sidebar {
+      width: 280px;
+      min-height: 600px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border-radius: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+      padding: 25px 20px;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 20px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3, #00b894, #fdcb6e, #e17055);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: white;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+    }
+
+    .logo-icon::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 17px;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3, #00b894, #fdcb6e, #e17055);
+      z-index: -1;
+      opacity: 0.5;
+      filter: blur(8px);
+    }
+
+    .logo-text {
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1.4rem;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text .rainbow {
+      background: linear-gradient(90deg, #6c5ce7, #0984e3, #00b894, #fdcb6e, #e17055);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text .sub {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.4);
+      -webkit-text-fill-color: rgba(255,255,255,0.4);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .user-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 25px;
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-card .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
+    }
+
+    .user-card .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-card .user-info .name {
+      font-weight: 600;
+      color: #ffffff;
+      font-size: 0.95rem;
+    }
+
+    .user-card .user-info .email {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-card .user-info .role {
+      font-size: 0.65rem;
+      padding: 2px 10px;
+      border-radius: 30px;
+      display: inline-block;
+      margin-top: 3px;
+    }
+
+    .user-card .user-info .role.user { background: rgba(52,152,219,0.2); color: #5dade2; }
+    .user-card .user-info .role.moderator { background: rgba(241,196,15,0.2); color: #f1c40f; }
+    .user-card .user-info .role.owner { background: rgba(231,76,60,0.2); color: #ec7063; }
+    .user-card .user-info .role.pending-moderator { background: rgba(155,89,182,0.2); color: #bb8fce; }
+
+    .user-card .user-info .rank-badge {
+      font-size: 0.65rem;
+      padding: 2px 10px;
+      border-radius: 30px;
+      display: inline-block;
+      margin-top: 3px;
+      background: linear-gradient(90deg, #6c5ce7, #0984e3, #00b894);
+      color: white;
+      font-weight: 600;
+    }
+
+    .user-card .user-info .burn-warning {
+      font-size: 0.6rem;
+      color: #ff6b6b;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .nav-menu {
+      list-style: none;
+    }
+
+    .nav-menu li { margin-bottom: 4px; }
+
+    .nav-menu li a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-menu li a:hover {
+      background: rgba(255,255,255,0.06);
+      color: #ffffff;
+    }
+
+    .nav-menu li a.active {
+      background: rgba(108,92,231,0.15);
+      color: #a29bfe;
+      border: 1px solid rgba(108,92,231,0.15);
+    }
+
+    .nav-menu li a .icon {
+      font-size: 1.2rem;
+      width: 28px;
+      text-align: center;
+    }
+
+    .nav-menu li a .badge {
+      margin-left: auto;
+      background: #6c5ce7;
+      color: white;
+      font-size: 0.65rem;
+      padding: 2px 10px;
+      border-radius: 30px;
+      font-weight: 600;
+    }
+
+    .nav-menu .divider {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin: 12px 0;
+    }
+
+    .main-content {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(20px);
+      border-radius: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+      padding: 30px;
+      min-height: 600px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1001;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3);
+      color: white;
+      border: none;
+      font-size: 1.5rem;
+      box-shadow: 0 8px 30px rgba(108,92,231,0.4);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sidebar-toggle:hover { transform: scale(1.05); }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 999;
+      backdrop-filter: blur(4px);
+    }
+
+    .auth-overlay {
+      display: flex;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(16px);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .auth-overlay.hidden { display: none; }
+
+    .auth-box {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      padding: 45px;
+      border-radius: 32px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+      animation: slideUp 0.5s ease;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .auth-box .logo-center {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .auth-box .logo-center .logo-big {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3, #00b894, #fdcb6e, #e17055);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: white;
+      box-shadow: 0 8px 30px rgba(108,92,231,0.3);
+    }
+
+    .auth-box .logo-center h2 {
+      color: #ffffff;
+      margin-top: 15px;
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .auth-box .logo-center p {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    .auth-box .form-group {
+      margin-bottom: 18px;
+    }
+
+    .auth-box .form-group label {
+      display: block;
+      font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+    }
+
+    .auth-box .form-group input,
+    .auth-box .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.2s;
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
+    }
+
+    .auth-box .form-group input:focus,
+    .auth-box .form-group select:focus {
+      border-color: #6c5ce7;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(108,92,231,0.1);
+    }
+
+    .auth-box .form-group input::placeholder { color: rgba(255,255,255,0.25); }
+    .auth-box .form-group select option { background: #1a1a2e; color: #ffffff; }
+
+    .auth-box .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .auth-box .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(108,92,231,0.3);
+    }
+
+    .auth-box .auth-switch {
+      margin-top: 15px;
+      text-align: center;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.9rem;
+    }
+
+    .auth-box .auth-switch a {
+      color: #a29bfe;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .auth-box .auth-switch a:hover { text-decoration: underline; }
+
+    .card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 25px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .card h3 {
+      color: #ffffff;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card p { color: rgba(255,255,255,0.5); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+    }
+
+    .rank-progress {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+    }
+
+    .rank-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.2);
+      transition: all 0.3s;
+      position: relative;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .rank-dot.active {
+      border-color: #6c5ce7;
+      background: rgba(108,92,231,0.15);
+      color: #a29bfe;
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(108,92,231,0.15);
+    }
+
+    .rank-dot .rank-label {
+      position: absolute;
+      top: -18px;
+      font-size: 0.45rem;
+      color: rgba(255,255,255,0.3);
+      white-space: nowrap;
+    }
+
+    .rank-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-top: 10px;
+    }
+
+    .rank-info .rank-icon { font-size: 2.2rem; }
+    .rank-info .rank-details h4 { color: #ffffff; font-size: 1rem; }
+    .rank-info .rank-details p { color: rgba(255,255,255,0.4); font-size: 0.85rem; }
+
+    .rank-info .rank-details .progress-bar {
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      height: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .rank-info .rank-details .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6c5ce7, #0984e3);
+      transition: width 0.5s;
+      border-radius: 20px;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: all 0.2s;
+    }
+
+    .task-item:hover {
+      border-color: rgba(108,92,231,0.15);
+    }
+
+    .task-item .task-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .task-item .task-info .task-title {
+      font-weight: 500;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .task-item .task-info .task-difficulty {
+      font-size: 0.6rem;
+      padding: 2px 10px;
+      border-radius: 30px;
+      font-weight: 600;
+    }
+
+    .task-item .task-info .task-difficulty.easy { background: rgba(46,204,113,0.15); color: #58d68d; }
+    .task-item .task-info .task-difficulty.medium { background: rgba(241,196,15,0.15); color: #f1c40f; }
+    .task-item .task-info .task-difficulty.hard { background: rgba(231,76,60,0.15); color: #ec7063; }
+
+    .task-item .task-info .task-points {
+      background: rgba(108,92,231,0.1);
+      padding: 3px 10px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #a29bfe;
+    }
+
+    .task-item .task-status {
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 30px;
+    }
+
+    .task-item .task-status.completed { background: rgba(46,204,113,0.12); color: #58d68d; }
+    .task-item .task-status.pending { background: rgba(241,196,15,0.1); color: #f1c40f; }
+    .task-item .task-status.review { background: rgba(108,92,231,0.1); color: #a29bfe; }
+
+    .task-item .task-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .event-card {
+      background: rgba(255,255,255,0.02);
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.04);
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+
+    .event-card:hover {
+      border-color: rgba(108,92,231,0.15);
+    }
+
+    .event-card .event-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #ffffff;
+    }
+
+    .event-card .event-meta {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.85rem;
+      margin: 4px 0;
+    }
+
+    .event-card .event-status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .event-card .event-status.approved { background: rgba(46,204,113,0.12); color: #58d68d; }
+    .event-card .event-status.pending { background: rgba(241,196,15,0.1); color: #f1c40f; }
+    .event-card .event-status.rejected { background: rgba(231,76,60,0.12); color: #ec7063; }
+
+    .event-card .event-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .announcement-card {
+      background: rgba(108,92,231,0.04);
+      border: 1px solid rgba(108,92,231,0.08);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+
+    .announcement-card:hover {
+      border-color: rgba(108,92,231,0.2);
+    }
+
+    .announcement-card .announcement-title {
+      font-weight: 600;
+      color: #a29bfe;
+      font-size: 1rem;
+    }
+
+    .announcement-card .announcement-meta {
+      color: rgba(255,255,255,0.35);
+      font-size: 0.8rem;
+      margin: 4px 0;
+    }
+
+    .announcement-card .announcement-description {
+      color: rgba(255,255,255,0.6);
+      margin: 6px 0;
+      font-size: 0.9rem;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 5px;
+      font-size: 0.85rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      background: rgba(255,255,255,0.03);
+      color: #ffffff;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: #6c5ce7;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(108,92,231,0.06);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .form-group select option {
+      background: #1a1a2e;
+      color: #ffffff;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    .btn-primary { background: linear-gradient(135deg, #6c5ce7, #0984e3); color: white; }
+    .btn-primary:hover { background: linear-gradient(135deg, #5f3dc4, #0873c7); }
+
+    .btn-success { background: linear-gradient(135deg, #00b894, #00a86b); color: white; }
+    .btn-success:hover { background: linear-gradient(135deg, #00a383, #00945d); }
+
+    .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+    .btn-danger:hover { background: linear-gradient(135deg, #d63031, #a93226); }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.5);
+    }
+
+    .btn-outline:hover {
+      border-color: #6c5ce7;
+      background: rgba(108,92,231,0.05);
+      color: #ffffff;
+    }
+
+    .btn-sm { padding: 4px 12px; font-size: 0.7rem; }
+    .btn-rainbow { background: linear-gradient(90deg, #6c5ce7, #0984e3, #00b894, #fdcb6e, #e17055); color: white; font-weight: 600; }
+    .btn-rainbow:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,92,231,0.3); }
+    .btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+    .btn-warning:hover { background: linear-gradient(135deg, #e67e22, #d35400); }
+    .btn-info { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+    .btn-info:hover { background: linear-gradient(135deg, #2980b9, #2471a3); }
+
+    .btn-delete {
+      background: rgba(231,76,60,0.1);
+      border: 1px solid rgba(231,76,60,0.2);
+      color: #ec7063;
+    }
+
+    .btn-delete:hover {
+      background: rgba(231,76,60,0.2);
+      border-color: #e74c3c;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(231,76,60,0.15);
+    }
+
+    .user-card-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.04);
+      margin-bottom: 8px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .user-card-item:hover {
+      border-color: rgba(108,92,231,0.12);
+    }
+
+    .user-card-item .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-card-item .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .user-card-item .user-name {
+      font-weight: 600;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .user-card-item .user-email {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.35);
+    }
+
+    .user-card-item .user-stats {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .user-card-item .user-stats span {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .user-card-item .user-stats strong {
+      color: #ffffff;
+    }
+
+    .ranking-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.7rem;
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.3);
+    }
+
+    .ranking-badge.top1 { background: linear-gradient(135deg, #ffd700, #f39c12); color: #fff; }
+    .ranking-badge.top2 { background: linear-gradient(135deg, #bdc3c7, #95a5a6); color: #fff; }
+    .ranking-badge.top3 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; }
+
+    .moderator-request-card {
+      background: rgba(155,89,182,0.05);
+      border: 1px solid rgba(155,89,182,0.1);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+
+    .moderator-request-card:hover {
+      border-color: rgba(155,89,182,0.2);
+    }
+
+    .moderator-request-card .request-title {
+      font-weight: 600;
+      color: #bb8fce;
+      font-size: 0.95rem;
+    }
+
+    .moderator-request-card .request-meta {
+      color: rgba(255,255,255,0.35);
+      font-size: 0.8rem;
+      margin: 4px 0;
+    }
+
+    .moderator-request-card .request-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .penalty-card {
+      background: rgba(231,76,60,0.04);
+      border: 1px solid rgba(231,76,60,0.08);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+
+    .penalty-card:hover {
+      border-color: rgba(231,76,60,0.15);
+    }
+
+    .penalty-card .penalty-title {
+      font-weight: 600;
+      color: #ec7063;
+      font-size: 0.95rem;
+    }
+
+    .penalty-card .penalty-meta {
+      color: rgba(255,255,255,0.35);
+      font-size: 0.8rem;
+      margin: 4px 0;
+    }
+
+    #notifications {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      max-width: 380px;
+      width: 90%;
+    }
+
+    .notification {
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .notification.info { background: rgba(108,92,231,0.15); border: 1px solid rgba(108,92,231,0.15); color: #ffffff; }
+    .notification.success { background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.12); color: #ffffff; }
+    .notification.warning { background: rgba(241,196,15,0.1); border: 1px solid rgba(241,196,15,0.1); color: #ffffff; }
+    .notification.danger { background: rgba(231,76,60,0.12); border: 1px solid rgba(231,76,60,0.12); color: #ffffff; }
+
+    .notification .close {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: rgba(255,255,255,0.3);
+      padding: 0 5px;
+    }
+
+    .notification .close:hover { color: #ffffff; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      z-index: 9998;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      padding: 35px;
+      border-radius: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalIn 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-content h2 {
+      color: #ffffff;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .profile-modal .user-avatar-large {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6c5ce7, #0984e3);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 600;
+      margin: 0 auto 15px;
+      box-shadow: 0 4px 20px rgba(108,92,231,0.3);
+    }
+
+    .profile-modal .user-detail {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .profile-modal .user-detail:last-child { border-bottom: none; }
+    .profile-modal .user-detail .label { color: rgba(255,255,255,0.4); font-weight: 500; font-size: 0.85rem; }
+    .profile-modal .user-detail .value { color: #ffffff; font-weight: 500; font-size: 0.85rem; }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .setting-item:last-child { border-bottom: none; }
+    .setting-item span { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+
+    .toggle {
+      width: 44px;
+      height: 24px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 40px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .toggle.active { background: #6c5ce7; }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle.active::after { left: 23px; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .search-box {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.03);
+      color: #ffffff;
+      margin-bottom: 15px;
+    }
+
+    .search-box:focus {
+      border-color: #6c5ce7;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(108,92,231,0.06);
+    }
+
+    .search-box::placeholder { color: rgba(255,255,255,0.2); }
+
+    .announcement-form {
+      background: rgba(108,92,231,0.04);
+      border: 1px solid rgba(108,92,231,0.06);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .delete-section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .delete-section .warning-text {
+      color: #ec7063;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 992px) {
+      body { padding: 10px; }
+      .app-container { flex-direction: column; }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -320px;
+        width: 290px;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0 32px 32px 0;
+        z-index: 1000;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+        transition: left 0.3s ease;
+        padding-top: 30px;
+        overflow-y: auto;
+      }
+
+      .sidebar.open { left: 0; }
+      .sidebar-overlay.active { display: block; }
+      .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+
+      .main-content { border-radius: 20px; padding: 20px; min-height: 500px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .auth-box { padding: 30px; }
+      #notifications { top: 10px; right: 10px; max-width: 95%; }
+    }
+
+    @media (max-width: 480px) {
+      .task-item { flex-direction: column; align-items: stretch; gap: 8px; }
+      .task-item .task-actions { justify-content: flex-end; }
+      .user-card-item { flex-direction: column; text-align: center; }
+      .user-card-item .user-stats { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+<div id="notifications"></div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+<div class="app-container">
+  
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-container">
+      <div class="logo-icon">С</div>
+      <div class="logo-text">
+        <span class="rainbow">Спектр</span>
+        <span class="sub">Цветовое пространство</span>
+      </div>
+    </div>
+
+    <div class="user-card" id="sidebarUserCard">
+      <div class="avatar" id="sidebarAvatar">А</div>
+      <div class="user-info">
+        <div class="name" id="sidebarName">Пользователь</div>
+        <div class="email" id="sidebarEmail">email@example.com</div>
+        <span class="role user" id="sidebarRole">Участник</span>
+        <span class="rank-badge" id="sidebarRank">✨ Искра</span>
+        <span class="burn-warning" id="sidebarBurnWarning"></span>
+      </div>
+    </div>
+
+    <ul class="nav-menu">
+      <li><a class="active" data-tab="profile" onclick="switchTab('profile', this)"><span class="icon">👤</span> Профиль</a></li>
+      <li><a data-tab="tasks" onclick="switchTab('tasks', this)"><span class="icon">📋</span> Задания</a></li>
+      <li><a data-tab="events" onclick="switchTab('events', this)"><span class="icon">📅</span> Мероприятия</a></li>
+      <li><a data-tab="announcements" onclick="switchTab('announcements', this)"><span class="icon">📢</span> Объявления <span class="badge" id="announcementsBadge">0</span></a></li>
+      <li id="moderationMenuItem" style="display:none;"><a data-tab="moderation" onclick="switchTab('moderation', this)"><span class="icon">🔍</span> Модерация</a></li>
+      <li id="ownerMenuItem" style="display:none;"><a data-tab="owner" onclick="switchTab('owner', this)"><span class="icon">👑</span> Управление</a></li>
+      <li id="moderatorRequestMenuItem"><a data-tab="moderator-request" onclick="switchTab('moderator-request', this)"><span class="icon">📨</span> Стать модератором</a></li>
+      <li class="divider"></li>
+      <li><a onclick="showSettings()"><span class="icon">⚙️</span> Настройки</a></li>
+      <li><a onclick="showSupport()"><span class="icon">💬</span> Поддержка</a></li>
+      <li><a onclick="logout()" style="color:#ec7063;"><span class="icon">🚪</span> Выйти</a></li>
+    </ul>
+  </aside>
+
+  <main class="main-content">
+    
+    <div class="tab-content active" id="tab-profile">
+      <div class="card">
+        <h3>🌟 Мой профиль</h3>
+        <div id="profileInfo"></div>
+      </div>
+      <div class="card">
+        <h3>🏆 Ранг и прогресс</h3>
+        <div id="rankProgress"></div>
+      </div>
+      <div class="card">
+        <h3>📊 Статистика</h3>
+        <div id="profileStats"></div>
+      </div>
+      <div class="card" id="burnCard">
+        <h3>🔥 Система сгорания баллов</h3>
+        <div id="burnInfo"></div>
+      </div>
+      <div class="card delete-section">
+        <h3 style="color:#ec7063;">⚠️ Удаление профиля</h3>
+        <p class="warning-text">Удаление профиля приведёт к безвозвратной потере всех данных: баллов, заданий, заявок и истории.</p>
+        <button class="btn btn-delete" onclick="deleteProfile()" id="deleteProfileBtn">🗑️ Удалить мой профиль</button>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-tasks">
+      <div class="card">
+        <h3>📋 Доступные задания</h3>
+        <p style="color:rgba(255,255,255,0.3);margin-bottom:15px;font-size:0.85rem;">Задания отмечаются модераторами или владельцем после выполнения</p>
+        <div id="taskList"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-events">
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <h3>📅 Мои заявки</h3>
+            <div id="userEvents"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>✍️ Новая заявка</h3>
+            <form id="eventForm">
+              <div class="form-group">
+                <label>Название мероприятия *</label>
+                <input type="text" id="eventTitle" required placeholder="Например: Хакатон 2026">
+              </div>
+              <div class="form-group">
+                <label>Дата *</label>
+                <input type="date" id="eventDate" required>
+              </div>
+              <div class="form-group">
+                <label>Описание</label>
+                <textarea id="eventDescription" placeholder="Краткое описание"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">📤 Отправить заявку</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-announcements">
+      <div class="card">
+        <h3>📢 Объявления о мероприятиях</h3>
+        <div id="announcementsList"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-moderation">
+      <div class="card">
+        <h3>🔍 Модерация заявок на мероприятия</h3>
+        <div id="moderationList"></div>
+      </div>
+      <div class="card">
+        <h3>✅ Подтверждение заданий</h3>
+        <div id="taskVerificationList"></div>
+      </div>
+      <div class="card">
+        <h3>📢 Создать объявление о мероприятии</h3>
+        <div class="announcement-form">
+          <form id="announcementForm">
+            <div class="form-group">
+              <label>Название мероприятия *</label>
+              <input type="text" id="announcementTitle" required placeholder="Например: Большой хакатон">
+            </div>
+            <div class="form-group">
+              <label>Дата и время *</label>
+              <input type="datetime-local" id="announcementDateTime" required>
+            </div>
+            <div class="form-group">
+              <label>Место проведения</label>
+              <input type="text" id="announcementLocation" placeholder="ЦП Спектр, зал 1">
+            </div>
+            <div class="form-group">
+              <label>Описание</label>
+              <textarea id="announcementDescription" placeholder="Подробное описание мероприятия..." rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-info" style="width:100%;">📢 Опубликовать объявление</button>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🎯 Выдать Спектр-коины</h3>
+        <p style="color:rgba(255,255,255,0.3);margin-bottom:15px;font-size:0.85rem;">Выдайте баллы участникам за любые достижения</p>
+        <form id="givePointsForm">
+          <div class="form-group">
+            <label>Участник</label>
+            <select id="userSelect" required>
+              <option value="">Выберите участника</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Количество Спектр-коинов</label>
+            <input type="number" id="pointsAmount" required min="1" placeholder="Например: 50">
+          </div>
+          <div class="form-group">
+            <label>Причина (необязательно)</label>
+            <input type="text" id="pointsReason" placeholder="За активность на мероприятии">
+          </div>
+          <button type="submit" class="btn btn-rainbow" style="width:100%;">🎁 Выдать Спектр-коины</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>⚖️ Штрафы</h3>
+        <p style="color:rgba(255,255,255,0.3);margin-bottom:15px;font-size:0.85rem;">Назначьте штраф участнику за нарушение правил</p>
+        <form id="penaltyForm">
+          <div class="form-group">
+            <label>Участник</label>
+            <select id="penaltyUserSelect" required>
+              <option value="">Выберите участника</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Размер штрафа (Спектр-коинов)</label>
+            <input type="number" id="penaltyAmount" required min="1" placeholder="Например: 20">
+          </div>
+          <div class="form-group">
+            <label>Причина штрафа *</label>
+            <input type="text" id="penaltyReason" required placeholder="Нарушение правил пространства">
+          </div>
+          <button type="submit" class="btn btn-danger" style="width:100%;">⚖️ Назначить штраф</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>📋 История штрафов</h3>
+        <div id="penaltyHistory"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-owner">
+      <div class="card">
+        <h3>👑 Заявки на модератора</h3>
+        <div id="moderatorRequestsList"></div>
+      </div>
+      <div class="card">
+        <h3>📋 Текущие модераторы</h3>
+        <div id="moderatorsList"></div>
+      </div>
+      <div class="card">
+        <h3>🏆 Рейтинг участников</h3>
+        <p style="color:rgba(255,255,255,0.3);margin-bottom:15px;font-size:0.85rem;">Список всех участников с их баллами и рангами</p>
+        <input type="text" class="search-box" id="ratingSearch" placeholder="🔍 Поиск по имени или email...">
+        <div id="ratingList"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-moderator-request">
+      <div class="card">
+        <h3>📨 Подать заявку на модератора</h3>
+        <p style="color:rgba(255,255,255,0.3);margin-bottom:15px;font-size:0.85rem;">Заполните форму чтобы подать заявку на роль модератора. Владелец рассмотрит вашу заявку.</p>
+        <form id="moderatorRequestForm">
+          <div class="form-group">
+            <label>Ваше имя</label>
+            <input type="text" id="requestName" required placeholder="Введите ваше имя">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="requestEmail" required placeholder="example@mail.com">
+          </div>
+          <div class="form-group">
+            <label>Почему вы хотите стать модератором?</label>
+            <textarea id="requestReason" required placeholder="Опишите ваш опыт и мотивацию..." rows="4"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">📤 Отправить заявку</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>📊 Статус моей заявки</h3>
+        <div id="myRequestStatus"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div class="logo-center">
+      <div class="logo-big">С</div>
+      <h2>Цветовое пространство <span style="background:linear-gradient(90deg,#6c5ce7,#0984e3,#00b894,#fdcb6e,#e17055);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Спектр</span></h2>
+      <p>Войдите в систему</p>
+    </div>
+    
+    <form id="authForm">
+      <div class="form-group">
+        <label>Имя пользователя</label>
+        <input type="text" id="authName" required placeholder="Введите имя">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="authEmail" required placeholder="example@mail.com">
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="authPassword" required placeholder="Минимум 4 символа" minlength="4">
+      </div>
+      <div class="form-group" id="roleSelectGroup">
+        <label>Роль</label>
+        <select id="authRole">
+          <option value="user">👤 Участник</option>
+          <option value="owner">👑 Владелец</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary" id="authSubmitBtn">🔑 Войти</button>
+    </form>
+    
+    <div class="auth-switch">
+      <span id="authSwitchText">Нет аккаунта?</span>
+      <a id="authSwitchLink">Зарегистрироваться</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal profile-modal" id="userProfileModal">
+  <div class="modal-content">
+    <div class="user-avatar-large" id="modalUserAvatar">А</div>
+    <h2 style="text-align:center;color:#ffffff;font-size:1.2rem;" id="modalUserName">Имя</h2>
+    <div style="text-align:center; margin-bottom:15px;">
+      <span id="modalUserRole" style="padding:3px 12px;border-radius:30px;font-size:0.75rem;font-weight:500;background:rgba(52,152,219,0.15);color:#5dade2;">👤 Участник</span>
+      <span id="modalUserRank" style="display:inline-block;padding:3px 12px;border-radius:30px;font-size:0.75rem;font-weight:600;background:linear-gradient(90deg,#6c5ce7,#0984e3,#00b894);color:white;margin-left:6px;">✨ Искра</span>
+    </div>
+    <div class="user-detail">
+      <span class="label">📧 Email</span>
+      <span class="value" id="modalUserEmail">email@example.com</span>
+    </div>
+    <div class="user-detail">
+      <span class="label">⭐ Спектр-коины</span>
+      <span class="value" id="modalUserScore">0</span>
+    </div>
+    <div class="user-detail">
+      <span class="label">✅ Выполнено заданий</span>
+      <span class="value" id="modalUserTasks">0</span>
+    </div>
+    <div class="user-detail">
+      <span class="label">📅 Заявок на мероприятия</span>
+      <span class="value" id="modalUserEvents">0</span>
+    </div>
+    <div class="user-detail">
+      <span class="label">📊 Статус</span>
+      <span class="value" id="modalUserStatus">Активен</span>
+    </div>
+    <div class="user-detail">
+      <span class="label">🔥 Сгорание</span>
+      <span class="value" id="modalUserBurn">Нет</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('userProfileModal')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <h2>⚙️ Настройки</h2>
+    <div class="setting-item">
+      <span>🔔 Уведомления</span>
+      <div class="toggle active" onclick="toggleSetting(this)"></div>
+    </div>
+    <div class="setting-item">
+      <span>📧 Email-рассылка</span>
+      <div class="toggle" onclick="toggleSetting(this)"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('settingsModal')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="supportModal">
+  <div class="modal-content">
+    <h2>💬 Поддержка</h2>
+    <p style="color:rgba(255,255,255,0.4); margin-bottom:20px;">Опишите вашу проблему или вопрос</p>
+    <div class="form-group">
+      <label>Тема</label>
+      <input type="text" id="supportSubject" placeholder="Вопрос по баллам">
+    </div>
+    <div class="form-group">
+      <label>Сообщение</label>
+      <textarea id="supportMessage" placeholder="Опишите вашу проблему..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('supportModal')">Отмена</button>
+      <button class="btn btn-primary" onclick="sendSupport()">📤 Отправить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="deleteConfirmModal">
+  <div class="modal-content">
+    <h2 style="color:#ec7063;">⚠️ Подтверждение удаления</h2>
+    <p style="color:rgba(255,255,255,0.6); margin-bottom:20px;">
+      Вы уверены, что хотите удалить свой профиль? Это действие <strong style="color:#ec7063;">необратимо</strong>. 
+      Все ваши данные, баллы, задания и заявки будут безвозвратно удалены.
+    </p>
+    <div style="background:rgba(231,76,60,0.08);padding:12px;border-radius:10px;margin-bottom:20px;border:1px solid rgba(231,76,60,0.1);">
+      <p style="color:#ec7063;font-size:0.9rem;">👤 Пользователь: <strong id="deleteConfirmName"></strong></p>
+      <p style="color:#ec7063;font-size:0.9rem;">📧 Email: <strong id="deleteConfirmEmail"></strong></p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('deleteConfirmModal')">Отмена</button>
+      <button class="btn btn-danger" onclick="confirmDeleteProfile()" id="confirmDeleteBtn">🗑️ Да, удалить навсегда</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== RANKS ====================
+const RANKS = [
+  { id: 0, name: 'Искра', emoji: '✨', minScore: 0, desc: 'Новичок, только попал в пространство' },
+  { id: 1, name: 'Инфракрасный', emoji: '🔴', minScore: 50, desc: 'Готов регулярно выполнять поручения' },
+  { id: 2, name: 'Люминофор', emoji: '🟠', minScore: 150, desc: 'Накопленный свет, закрепился в команде' },
+  { id: 3, name: 'Лазер', emoji: '🟢', minScore: 300, desc: 'Умеет концентрировать силы и выдавать результат' },
+  { id: 4, name: 'Ультрафиолет', emoji: '🔵', minScore: 500, desc: 'Незаменимая часть экосистемы Спектра' },
+  { id: 5, name: 'Спектр', emoji: '🌈', minScore: 800, desc: 'Высшая точка эволюции, объединяет все компетенции' }
+];
+
+function getRank(score) {
+  let currentRank = RANKS[0];
+  for (const rank of RANKS) {
+    if (score >= rank.minScore) {
+      currentRank = rank;
+    }
+  }
+  return currentRank;
+}
+
+function getNextRank(score) {
+  for (const rank of RANKS) {
+    if (score < rank.minScore) {
+      return rank;
+    }
+  }
+  return null;
+}
+
+// ==================== ALL TASKS ====================
+const ALL_TASKS = [
+  { id: 1, title: 'Приветственный бонус', points: 10, difficulty: 'easy' },
+  { id: 2, title: 'Подписка на соц сети', points: 5, difficulty: 'easy' },
+  { id: 3, title: 'Подарок (ДР, 23.02/08.03)', points: 15, difficulty: 'easy' },
+  { id: 4, title: 'Посещение события пространства', points: 15, difficulty: 'easy' },
+  { id: 5, title: 'Рассказать в соц.сетях о пространстве', points: 20, difficulty: 'easy' },
+  { id: 6, title: 'Привести друга на событие', points: 25, difficulty: 'easy' },
+  { id: 7, title: 'Посещение тренировки', points: 10, difficulty: 'easy' },
+  { id: 8, title: 'Свободное посещение пространства', points: 5, difficulty: 'easy' },
+  { id: 9, title: 'Час уборки', points: 15, difficulty: 'easy' },
+  { id: 10, title: 'Пройти опрос', points: 10, difficulty: 'easy' },
+  { id: 11, title: 'Полезность для пространства', points: 40, difficulty: 'medium' },
+  { id: 12, title: 'Помощь в организации события', points: 50, difficulty: 'medium' },
+  { id: 13, title: 'Рассказать в учебном заведении о Спектре', points: 60, difficulty: 'medium' },
+  { id: 14, title: 'Провести свое событие', points: 75, difficulty: 'hard' },
+  { id: 15, title: 'Написать грантовый проект', points: 100, difficulty: 'hard' },
+  { id: 16, title: 'Воплотить идею пространства', points: 80, difficulty: 'hard' },
+  { id: 17, title: 'Поиск нового спикера', points: 70, difficulty: 'hard' },
+  { id: 18, title: 'Привлечение партнера', points: 90, difficulty: 'hard' }
+];
+
+function getNewTasks(existingTaskIds) {
+  const available = ALL_TASKS.filter(t => !existingTaskIds.includes(t.id));
+  if (available.length === 0) return ALL_TASKS.map(t => ({ ...t, completed: false, verified: false }));
+  const shuffled = available.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 5).map(t => ({ ...t, completed: false, verified: false }));
+}
+
+// ==================== DATABASE ====================
+class Database {
+  constructor() {
+    this.users = [];
+    this.moderatorRequests = [];
+    this.announcements = [];
+    this.penalties = [];
+    this.nextId = 1;
+    this.nextRequestId = 1;
+    this.nextAnnouncementId = 1;
+    this.nextPenaltyId = 1;
+    this.load();
+  }
+
+  load() {
+    const saved = localStorage.getItem('spektr_db');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        this.users = data.users || [];
+        this.moderatorRequests = data.moderatorRequests || [];
+        this.announcements = data.announcements || [];
+        this.penalties = data.penalties || [];
+        this.nextId = data.nextId || 1;
+        this.nextRequestId = data.nextRequestId || 1;
+        this.nextAnnouncementId = data.nextAnnouncementId || 1;
+        this.nextPenaltyId = data.nextPenaltyId || 1;
+      } catch (e) {
+        console.error('Ошибка загрузки данных:', e);
+        this.resetToDefaults();
+      }
+    } else {
+      this.resetToDefaults();
+    }
+  }
+
+  resetToDefaults() {
+    this.users = [
+      {
+        id: 1,
+        name: 'Владелец',
+        email: 'owner@spektr.ru',
+        password: 'spectrum',
+        role: 'owner',
+        score: 0,
+        tasks: [],
+        events: [],
+        penalties: [],
+        lastActivity: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      }
+    ];
+    this.moderatorRequests = [];
+    this.announcements = [];
+    this.penalties = [];
+    this.nextId = 2;
+    this.nextRequestId = 1;
+    this.nextAnnouncementId = 1;
+    this.nextPenaltyId = 1;
+    this.save();
+  }
+
+  save() {
+    localStorage.setItem('spektr_db', JSON.stringify({
+      users: this.users,
+      moderatorRequests: this.moderatorRequests,
+      announcements: this.announcements,
+      penalties: this.penalties,
+      nextId: this.nextId,
+      nextRequestId: this.nextRequestId,
+      nextAnnouncementId: this.nextAnnouncementId,
+      nextPenaltyId: this.nextPenaltyId
+    }));
+  }
+
+  getUser(id) {
+    return this.users.find(u => u.id === id);
+  }
+
+  getUserByEmail(email) {
+    return this.users.find(u => u.email === email);
+  }
+
+  createUser(name, email, password, role = 'user') {
+    const user = {
+      id: this.nextId++,
+      name,
+      email,
+      password,
+      role,
+      score: 0,
+      tasks: [],
+      events: [],
+      penalties: [],
+      lastActivity: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    user.tasks = getNewTasks([]);
+    this.users.push(user);
+    this.save();
+    return user;
+  }
+
+  updateUser(user) {
+    const index = this.users.findIndex(u => u.id === user.id);
+    if (index !== -1) {
+      this.users[index] = user;
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  deleteUser(userId) {
+    const index = this.users.findIndex(u => u.id === userId);
+    if (index !== -1) {
+      this.users.splice(index, 1);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  getAllUsers() {
+    return this.users;
+  }
+
+  getCurrentUser() {
+    const saved = localStorage.getItem('spektr_current_user');
+    if (saved) {
+      const userId = parseInt(saved);
+      return this.getUser(userId);
+    }
+    return null;
+  }
+
+  setCurrentUser(user) {
+    if (user) {
+      localStorage.setItem('spektr_current_user', String(user.id));
+    } else {
+      localStorage.removeItem('spektr_current_user');
+    }
+  }
+
+  createModeratorRequest(userId, name, email, reason) {
+    const request = {
+      id: this.nextRequestId++,
+      userId,
+      name,
+      email,
+      reason,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    this.moderatorRequests.push(request);
+    this.save();
+    return request;
+  }
+
+  getModeratorRequests() {
+    return this.moderatorRequests;
+  }
+
+  getModeratorRequestByUser(userId) {
+    return this.moderatorRequests.find(r => r.userId === userId);
+  }
+
+  updateModeratorRequest(requestId, status) {
+    const request = this.moderatorRequests.find(r => r.id === requestId);
+    if (request) {
+      request.status = status;
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  getPendingModeratorRequests() {
+    return this.moderatorRequests.filter(r => r.status === 'pending');
+  }
+
+  createAnnouncement(title, dateTime, location, description, authorName) {
+    const announcement = {
+      id: this.nextAnnouncementId++,
+      title,
+      dateTime,
+      location,
+      description,
+      authorName,
+      createdAt: new Date().toISOString()
+    };
+    this.announcements.push(announcement);
+    this.save();
+    return announcement;
+  }
+
+  getAnnouncements() {
+    return this.announcements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  createPenalty(userId, amount, reason, moderatorName) {
+    const penalty = {
+      id: this.nextPenaltyId++,
+      userId,
+      amount,
+      reason,
+      moderatorName,
+      createdAt: new Date().toISOString()
+    };
+    this.penalties.push(penalty);
+    
+    const user = this.getUser(userId);
+    if (user) {
+      user.score = Math.max(0, user.score - amount);
+      user.penalties = user.penalties || [];
+      user.penalties.push(penalty.id);
+      this.updateUser(user);
+    }
+    
+    this.save();
+    return penalty;
+  }
+
+  getPenalties() {
+    return this.penalties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  getUserPenalties(userId) {
+    return this.penalties.filter(p => p.userId === userId);
+  }
+}
+
+// ==================== BURN SYSTEM ====================
+function checkAndApplyBurn(user) {
+  const now = new Date();
+  const lastActivity = new Date(user.lastActivity);
+  const daysInactive = Math.floor((now - lastActivity) / (1000 * 60 * 60 * 24));
+  
+  let burnMessage = '';
+  let burned = false;
+  
+  if (daysInactive >= 90) {
+    const monthsInactive = Math.floor(daysInactive / 30);
+    if (monthsInactive > 0 && user.score > 0) {
+      const burnRate = 0.2;
+      let newScore = user.score;
+      for (let i = 0; i < monthsInactive; i++) {
+        newScore = Math.floor(newScore * (1 - burnRate));
+      }
+      if (newScore < user.score) {
+        const burnedAmount = user.score - newScore;
+        user.score = newScore;
+        burned = true;
+        burnMessage = `🔥 Сгорело ${burnedAmount} Спектр-коинов (неактивность ${daysInactive} дней)`;
+      }
+    }
+  }
+  
+  if (user.score < 0) user.score = 0;
+  
+  return { burned, burnMessage };
+}
+
+function updateLastActivity(user) {
+  user.lastActivity = new Date().toISOString();
+}
+
+// ==================== DELETE PROFILE ====================
+function deleteProfile() {
+  if (!currentUser) return;
+  
+  if (currentUser.role === 'owner') {
+    showNotification('❌ Владелец не может удалить свой профиль', 'warning');
+    return;
+  }
+  
+  document.getElementById('deleteConfirmName').textContent = currentUser.name;
+  document.getElementById('deleteConfirmEmail').textContent = currentUser.email;
+  document.getElementById('deleteConfirmModal').classList.add('active');
+}
+
+function confirmDeleteProfile() {
+  if (!currentUser) return;
+  
+  const userId = currentUser.id;
+  
+  // Удаляем пользователя из базы
+  db.deleteUser(userId);
+  
+  // Очищаем текущего пользователя
+  currentUser = null;
+  db.setCurrentUser(null);
+  
+  // Закрываем модальное окно
+  closeModal('deleteConfirmModal');
+  
+  // Показываем уведомление
+  showNotification('🗑️ Ваш профиль успешно удалён', 'danger');
+  
+  // Переходим на экран авторизации
+  authOverlay.classList.remove('hidden');
+  isLoginMode = true;
+  switchAuthMode();
+  authForm.reset();
+}
+
+// ==================== INIT ====================
+const db = new Database();
+let currentUser = null;
+
+// ==================== AUTH ====================
+const authOverlay = document.getElementById('authOverlay');
+const authForm = document.getElementById('authForm');
+const authSubmitBtn = document.getElementById('authSubmitBtn');
+const authSwitchLink = document.getElementById('authSwitchLink');
+const authSwitchText = document.getElementById('authSwitchText');
+const authSubtitle = document.getElementById('authSubtitle');
+const roleSelectGroup = document.getElementById('roleSelectGroup');
+
+let isLoginMode = true;
+
+function switchAuthMode() {
+  isLoginMode = !isLoginMode;
+  if (isLoginMode) {
+    authSubmitBtn.textContent = '🔑 Войти';
+    authSwitchText.textContent = 'Нет аккаунта?';
+    authSwitchLink.textContent = 'Зарегистрироваться';
+    roleSelectGroup.style.display = 'none';
+  } else {
+    authSubmitBtn.textContent = '📝 Зарегистрироваться';
+    authSwitchText.textContent = 'Уже есть аккаунт?';
+    authSwitchLink.textContent = 'Войти';
+    roleSelectGroup.style.display = 'block';
+  }
+}
+
+authSwitchLink.addEventListener('click', switchAuthMode);
+
+authForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const name = document.getElementById('authName').value.trim();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  const role = document.getElementById('authRole').value;
+  
+  if (!name || !email || !password) {
+    showNotification('Пожалуйста, заполните все поля', 'warning');
+    return;
+  }
+  
+  if (password.length < 4) {
+    showNotification('Пароль должен быть минимум 4 символа', 'warning');
+    return;
+  }
+  
+  if (isLoginMode) {
+    const user = db.getUserByEmail(email);
+    if (!user || user.password !== password) {
+      showNotification('Неверный email или пароль', 'warning');
+      return;
+    }
+    currentUser = user;
+    db.setCurrentUser(user);
+    authOverlay.classList.add('hidden');
+    render();
+    showNotification(`👋 Добро пожаловать, ${user.name}!`, 'success');
+  } else {
+    if (db.getUserByEmail(email)) {
+      showNotification('Пользователь с таким email уже существует', 'warning');
+      return;
+    }
+    
+    const newUser = db.createUser(name, email, password, role);
+    currentUser = newUser;
+    db.setCurrentUser(newUser);
+    authOverlay.classList.add('hidden');
+    render();
+    showNotification(`🎉 Добро пожаловать, ${newUser.name}!`, 'success');
+  }
+});
+
+// ==================== LOGOUT ====================
+function logout() {
+  if (confirm('Выйти из аккаунта?')) {
+    currentUser = null;
+    db.setCurrentUser(null);
+    authOverlay.classList.remove('hidden');
+    isLoginMode = true;
+    switchAuthMode();
+    authForm.reset();
+    closeSidebar();
+    showNotification('Вы вышли из аккаунта', 'info');
+  }
+}
+
+// ==================== SIDEBAR ====================
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+
+// ==================== TAB SWITCHING ====================
+function switchTab(tab, element) {
+  document.querySelectorAll('.nav-menu a[data-tab]').forEach(a => a.classList.remove('active'));
+  if (element) element.classList.add('active');
+  
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  
+  if (tab === 'moderation' && (currentUser?.role === 'moderator' || currentUser?.role === 'owner')) {
+    renderModeration();
+    renderTaskVerification();
+    renderPenaltyHistory();
+  }
+  if (tab === 'owner' && currentUser?.role === 'owner') {
+    renderOwnerPanel();
+    renderRating();
+  }
+  if (tab === 'moderator-request') {
+    renderModeratorRequestStatus();
+  }
+  if (tab === 'announcements') {
+    renderAnnouncements();
+  }
+  
+  closeSidebar();
+}
+
+// ==================== RENDER ====================
+function render() {
+  if (!currentUser) return;
+  
+  const burnResult = checkAndApplyBurn(currentUser);
+  if (burnResult.burned) {
+    db.updateUser(currentUser);
+    showNotification(burnResult.burnMessage, 'danger');
+  }
+  
+  document.getElementById('sidebarAvatar').textContent = currentUser.name.split(' ').map(n => n[0]).join('');
+  document.getElementById('sidebarName').textContent = currentUser.name;
+  document.getElementById('sidebarEmail').textContent = currentUser.email;
+  
+  const role = document.getElementById('sidebarRole');
+  if (currentUser.role === 'owner') {
+    role.textContent = '👑 Владелец';
+    role.className = 'role owner';
+    document.getElementById('moderationMenuItem').style.display = 'block';
+    document.getElementById('ownerMenuItem').style.display = 'block';
+    document.getElementById('moderatorRequestMenuItem').style.display = 'none';
+  } else if (currentUser.role === 'moderator') {
+    role.textContent = '🔍 Модератор';
+    role.className = 'role moderator';
+    document.getElementById('moderationMenuItem').style.display = 'block';
+    document.getElementById('ownerMenuItem').style.display = 'none';
+    document.getElementById('moderatorRequestMenuItem').style.display = 'none';
+  } else if (currentUser.role === 'pending-moderator') {
+    role.textContent = '⏳ На рассмотрении';
+    role.className = 'role pending-moderator';
+    document.getElementById('moderationMenuItem').style.display = 'none';
+    document.getElementById('ownerMenuItem').style.display = 'none';
+    document.getElementById('moderatorRequestMenuItem').style.display = 'none';
+  } else {
+    role.textContent = '👤 Участник';
+    role.className = 'role user';
+    document.getElementById('moderationMenuItem').style.display = 'none';
+    document.getElementById('ownerMenuItem').style.display = 'none';
+    document.getElementById('moderatorRequestMenuItem').style.display = 'block';
+  }
+  
+  const rank = getRank(currentUser.score);
+  document.getElementById('sidebarRank').textContent = `${rank.emoji} ${rank.name}`;
+  
+  const now = new Date();
+  const lastActivity = new Date(currentUser.lastActivity);
+  const daysInactive = Math.floor((now - lastActivity) / (1000 * 60 * 60 * 24));
+  const burnWarning = document.getElementById('sidebarBurnWarning');
+  if (daysInactive >= 60) {
+    burnWarning.textContent = `⚠️ Сгорание через ${90 - daysInactive} дней`;
+    burnWarning.style.color = daysInactive >= 80 ? '#ff6b6b' : '#f39c12';
+  } else {
+    burnWarning.textContent = '';
+  }
+  
+  const announcements = db.getAnnouncements();
+  document.getElementById('announcementsBadge').textContent = announcements.length;
+  
+  renderProfile(rank);
+  renderTasks();
+  renderEvents();
+  renderAnnouncements();
+  
+  if (currentUser.role === 'moderator' || currentUser.role === 'owner') {
+    renderModeration();
+    renderTaskVerification();
+    renderPenaltyHistory();
+  }
+  if (currentUser.role === 'owner') {
+    renderOwnerPanel();
+    renderRating();
+  }
+  renderModeratorRequestStatus();
+}
+
+function renderProfile(rank) {
+  const completed = currentUser.tasks.filter(t => t.completed && t.verified);
+  const totalScore = completed.reduce((sum, t) => sum + t.points, 0);
+  const pendingVerification = currentUser.tasks.filter(t => t.completed && !t.verified);
+  
+  const easyCount = currentUser.tasks.filter(t => t.difficulty === 'easy' && t.completed && t.verified).length;
+  const mediumCount = currentUser.tasks.filter(t => t.difficulty === 'medium' && t.completed && t.verified).length;
+  const hardCount = currentUser.tasks.filter(t => t.difficulty === 'hard' && t.completed && t.verified).length;
+  
+  const roleLabels = {
+    owner: '👑 Владелец',
+    moderator: '🔍 Модератор',
+    user: '👤 Участник',
+    'pending-moderator': '⏳ На рассмотрении'
+  };
+  
+  document.getElementById('profileInfo').innerHTML = `
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="font-size:3.5rem;">${rank.emoji}</div>
+      <div>
+        <h2 style="color:#ffffff;font-size:1.3rem;">${currentUser.name}</h2>
+        <p style="color:rgba(255,255,255,0.4);font-size:0.85rem;">${currentUser.email}</p>
+        <div style="margin-top:5px;">
+          <span style="display:inline-block;padding:2px 12px;border-radius:30px;font-size:0.75rem;font-weight:500;background:${currentUser.role === 'owner' ? 'rgba(231,76,60,0.15)' : currentUser.role === 'moderator' ? 'rgba(241,196,15,0.15)' : currentUser.role === 'pending-moderator' ? 'rgba(155,89,182,0.15)' : 'rgba(52,152,219,0.15)'};color:${currentUser.role === 'owner' ? '#ec7063' : currentUser.role === 'moderator' ? '#f1c40f' : currentUser.role === 'pending-moderator' ? '#bb8fce' : '#5dade2'};">${roleLabels[currentUser.role]}</span>
+          <span style="display:inline-block;padding:2px 12px;border-radius:30px;font-size:0.75rem;font-weight:600;background:linear-gradient(90deg,#6c5ce7,#0984e3,#00b894);color:white;margin-left:6px;">${rank.emoji} ${rank.name}</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const nextRank = getNextRank(currentUser.score);
+  const progress = nextRank ? Math.min(100, Math.round((currentUser.score / nextRank.minScore) * 100)) : 100;
+  
+  document.getElementById('rankProgress').innerHTML = `
+    <div class="rank-progress">
+      ${RANKS.map((r, i) => `
+        <div class="rank-dot ${i <= rank.id ? 'active' : ''}">
+          ${r.emoji}
+          <span class="rank-label">${r.name}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="rank-info">
+      <div class="rank-icon">${rank.emoji}</div>
+      <div class="rank-details">
+        <h4>${rank.name}</h4>
+        <p>${rank.desc}</p>
+        ${nextRank ? `
+          <div class="progress-bar">
+            <div class="fill" style="width:${progress}%;"></div>
+          </div>
+          <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px;">${currentUser.score} / ${nextRank.minScore} SC до ранга ${nextRank.emoji} ${nextRank.name}</p>
+        ` : `
+          <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px;">🏆 Максимальный ранг достигнут!</p>
+        `}
+      </div>
+    </div>
+  `;
+  
+  const pendingCount = pendingVerification.length;
+  
+  document.getElementById('profileStats').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px;">
+      <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.03);">
+        <div style="font-size:1.8rem;font-weight:700;color:#a29bfe;">${currentUser.score}</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">⭐ Спектр-коинов</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.03);">
+        <div style="font-size:1.8rem;font-weight:700;color:#58d68d;">${completed.length}</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">✅ Выполнено</div>
+      </div>
+      ${pendingCount > 0 ? `
+        <div style="background:rgba(241,196,15,0.05);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(241,196,15,0.08);">
+          <div style="font-size:1.8rem;font-weight:700;color:#f1c40f;">${pendingCount}</div>
+          <div style="font-size:0.75rem;color:#f1c40f;">⏳ На проверке</div>
+        </div>
+      ` : ''}
+      <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.03);">
+        <div style="font-size:1.8rem;font-weight:700;color:#58d68d;">${easyCount}</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">🟢 Простых</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.03);">
+        <div style="font-size:1.8rem;font-weight:700;color:#f1c40f;">${mediumCount}</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">🟡 Средних</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.03);">
+        <div style="font-size:1.8rem;font-weight:700;color:#ec7063;">${hardCount}</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">🔴 Сложных</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.03);">
+        <div style="font-size:1.8rem;font-weight:700;color:#5dade2;">${currentUser.events.length}</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">📅 Заявок</div>
+      </div>
+    </div>
+  `;
+  
+  const now = new Date();
+  const lastAct = new Date(currentUser.lastActivity);
+  const daysInactive = Math.floor((now - lastAct) / (1000 * 60 * 60 * 24));
+  
+  document.getElementById('burnInfo').innerHTML = `
+    <div style="background:rgba(255,255,255,0.02);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <span style="font-weight:500;color:#ffffff;font-size:0.85rem;">Последняя активность:</span>
+          <span style="color:rgba(255,255,255,0.4);font-size:0.85rem;">${lastAct.toLocaleDateString()} ${lastAct.toLocaleTimeString()}</span>
+        </div>
+        <div>
+          <span style="font-weight:500;color:#ffffff;font-size:0.85rem;">Дней бездействия:</span>
+          <span style="color:${daysInactive >= 80 ? '#ff6b6b' : daysInactive >= 60 ? '#f39c12' : 'rgba(255,255,255,0.4)'};font-weight:600;font-size:0.85rem;">${daysInactive}</span>
+        </div>
+        <div>
+          <span style="font-weight:500;color:#ffffff;font-size:0.85rem;">Сгорание:</span>
+          <span style="color:${daysInactive >= 90 ? '#ff6b6b' : 'rgba(255,255,255,0.4)'};font-size:0.85rem;">
+            ${daysInactive >= 90 ? '🔥 Активно (20% в месяц)' : daysInactive >= 60 ? `⚠️ Начнётся через ${90 - daysInactive} дней` : '✅ Неактивно'}
+          </span>
+        </div>
+      </div>
+      ${daysInactive >= 90 ? `
+        <div style="margin-top:10px;padding:10px;background:rgba(231,76,60,0.08);border-radius:8px;color:#ec7063;font-size:0.8rem;border:1px solid rgba(231,76,60,0.08);">
+          ⚠️ Ваши баллы сгорают из-за длительной неактивности! Выполните задание чтобы остановить сгорание.
+        </div>
+      ` : daysInactive >= 60 ? `
+        <div style="margin-top:10px;padding:10px;background:rgba(241,196,15,0.06);border-radius:8px;color:#f1c40f;font-size:0.8rem;border:1px solid rgba(241,196,15,0.06);">
+          ⚠️ Если вы не будете активны в течение ${90 - daysInactive} дней, начнётся сгорание баллов (20% в месяц).
+        </div>
+      ` : `
+        <div style="margin-top:10px;padding:10px;background:rgba(46,204,113,0.05);border-radius:8px;color:#58d68d;font-size:0.8rem;border:1px solid rgba(46,204,113,0.05);">
+          ✅ Вы активны! Продолжайте выполнять задания чтобы накапливать баллы.
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function renderTasks() {
+  const taskList = document.getElementById('taskList');
+  
+  const allCompleted = currentUser.tasks.every(t => t.completed && t.verified);
+  if (allCompleted && currentUser.tasks.length > 0) {
+    const existingIds = currentUser.tasks.map(t => t.id);
+    const newTasks = getNewTasks(existingIds);
+    currentUser.tasks = newTasks;
+    db.updateUser(currentUser);
+    showNotification('🎉 Все задания выполнены! Загружены новые задания', 'success');
+  }
+  
+  if (currentUser.tasks.length === 0) {
+    taskList.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Нет доступных заданий</p>';
+  } else {
+    taskList.innerHTML = currentUser.tasks.map(task => {
+      const diffLabels = { easy: '🟢 Простое', medium: '🟡 Среднее', hard: '🔴 Сложное' };
+      const isCompleted = task.completed && task.verified;
+      const isPending = task.completed && !task.verified;
+      
+      let statusHtml = '';
+      if (isCompleted) {
+        statusHtml = `<span class="task-status completed">✅ Выполнено</span>`;
+      } else if (isPending) {
+        statusHtml = `<span class="task-status review">⏳ На проверке</span>`;
+      } else {
+        statusHtml = `<span class="task-status pending">⏳ Не выполнено</span>`;
+      }
+      
+      return `
+        <div class="task-item">
+          <div class="task-info">
+            <span class="task-title">${task.title}</span>
+            <span class="task-difficulty ${task.difficulty}">${diffLabels[task.difficulty]}</span>
+            <span class="task-points">+${task.points} SC</span>
+            ${statusHtml}
+          </div>
+          <div class="task-actions">
+            ${!task.completed ? `
+              <button class="btn btn-warning btn-sm" onclick="requestTaskVerification(${task.id})">
+                📤 Отправить на проверку
+              </button>
+            ` : isPending ? `
+              <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);">Ожидает проверки</span>
+            ` : `
+              <span style="font-size:0.7rem;color:#58d68d;">✅ Подтверждено</span>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function renderEvents() {
+  const userEvents = document.getElementById('userEvents');
+  if (currentUser.events.length === 0) {
+    userEvents.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">У вас пока нет заявок</p>';
+  } else {
+    userEvents.innerHTML = currentUser.events.map(ev => `
+      <div class="event-card">
+        <div class="event-title">${ev.title}</div>
+        <div class="event-meta">📅 ${ev.date}</div>
+        <div class="event-meta">${ev.description || ''}</div>
+        <span class="event-status ${ev.status}">${getStatusLabel(ev.status)}</span>
+        <div class="event-actions">
+          <button class="btn btn-danger btn-sm" onclick="cancelEvent(${ev.id})">🗑️ Отменить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderAnnouncements() {
+  const announcements = db.getAnnouncements();
+  const list = document.getElementById('announcementsList');
+  
+  if (announcements.length === 0) {
+    list.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Нет объявлений о мероприятиях</p>';
+  } else {
+    list.innerHTML = announcements.map(a => `
+      <div class="announcement-card">
+        <div class="announcement-title">📢 ${a.title}</div>
+        <div class="announcement-meta">📅 ${new Date(a.dateTime).toLocaleString('ru-RU')}</div>
+        ${a.location ? `<div class="announcement-meta">📍 ${a.location}</div>` : ''}
+        <div class="announcement-description">${a.description || ''}</div>
+        <div class="announcement-meta" style="margin-top:6px;font-size:0.7rem;color:rgba(255,255,255,0.2);">
+          👤 Опубликовано: ${a.authorName} • ${new Date(a.createdAt).toLocaleDateString()}
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderModeration() {
+  const allUsers = db.getAllUsers();
+  const pendingEvents = [];
+  allUsers.forEach(u => {
+    u.events.forEach(e => {
+      if (e.status === 'pending') {
+        pendingEvents.push({ ...e, userName: u.name, userId: u.id });
+      }
+    });
+  });
+  
+  const modList = document.getElementById('moderationList');
+  if (pendingEvents.length === 0) {
+    modList.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Нет заявок на модерацию</p>';
+  } else {
+    modList.innerHTML = pendingEvents.map(ev => `
+      <div class="event-card">
+        <div class="event-title">${ev.title}</div>
+        <div class="event-meta">📅 ${ev.date}</div>
+        <div class="event-meta">👤 от: ${ev.userName}</div>
+        <div class="event-meta">${ev.description || ''}</div>
+        <div class="event-actions">
+          <button class="btn btn-success btn-sm" onclick="moderateEvent(${ev.userId}, ${ev.id}, 'approved')">✅ Одобрить</button>
+          <button class="btn btn-danger btn-sm" onclick="moderateEvent(${ev.userId}, ${ev.id}, 'rejected')">❌ Отклонить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  const userSelect = document.getElementById('userSelect');
+  const allUsersList = db.getAllUsers().filter(u => u.id !== currentUser.id && u.role !== 'owner');
+  userSelect.innerHTML = '<option value="">Выберите участника</option>' + 
+    allUsersList.map(u => {
+      return `<option value="${u.id}">${u.name} (${u.score} SC) — ${u.role === 'moderator' ? 'модератор' : 'участник'}</option>`;
+    }).join('');
+  
+  const penaltySelect = document.getElementById('penaltyUserSelect');
+  penaltySelect.innerHTML = '<option value="">Выберите участника</option>' + 
+    allUsersList.map(u => {
+      return `<option value="${u.id}">${u.name} (${u.score} SC)</option>`;
+    }).join('');
+}
+
+function renderTaskVerification() {
+  const allUsers = db.getAllUsers();
+  const pendingTasks = [];
+  
+  allUsers.forEach(u => {
+    if (u.id === currentUser.id) return;
+    u.tasks.forEach(t => {
+      if (t.completed && !t.verified) {
+        pendingTasks.push({ ...t, userName: u.name, userId: u.id });
+      }
+    });
+  });
+  
+  const list = document.getElementById('taskVerificationList');
+  if (pendingTasks.length === 0) {
+    list.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Нет заданий на проверку</p>';
+  } else {
+    list.innerHTML = pendingTasks.map(t => `
+      <div class="task-item">
+        <div class="task-info">
+          <span class="task-title">${t.title}</span>
+          <span class="task-difficulty ${t.difficulty}">${t.difficulty === 'easy' ? '🟢 Простое' : t.difficulty === 'medium' ? '🟡 Среднее' : '🔴 Сложное'}</span>
+          <span class="task-points">+${t.points} SC</span>
+          <span style="font-size:0.75rem;color:rgba(255,255,255,0.3);">👤 ${t.userName}</span>
+          <span class="task-status review">⏳ На проверке</span>
+        </div>
+        <div class="task-actions">
+          <button class="btn btn-success btn-sm" onclick="verifyTask(${t.userId}, ${t.id}, true)">✅ Подтвердить</button>
+          <button class="btn btn-danger btn-sm" onclick="verifyTask(${t.userId}, ${t.id}, false)">❌ Отклонить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderPenaltyHistory() {
+  const penalties = db.getPenalties();
+  const list = document.getElementById('penaltyHistory');
+  
+  if (penalties.length === 0) {
+    list.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">История штрафов пуста</p>';
+  } else {
+    list.innerHTML = penalties.map(p => {
+      const user = db.getUser(p.userId);
+      return `
+        <div class="penalty-card">
+          <div class="penalty-title">⚖️ Штраф: ${p.amount} SC</div>
+          <div class="penalty-meta">👤 ${user ? user.name : 'Пользователь удалён'} • ${p.reason}</div>
+          <div class="penalty-meta">👮 Назначил: ${p.moderatorName} • ${new Date(p.createdAt).toLocaleDateString()}</div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function renderOwnerPanel() {
+  const requests = db.getPendingModeratorRequests();
+  const requestsList = document.getElementById('moderatorRequestsList');
+  if (requests.length === 0) {
+    requestsList.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Нет заявок на модератора</p>';
+  } else {
+    requestsList.innerHTML = requests.map(r => {
+      return `
+        <div class="moderator-request-card">
+          <div class="request-title">📨 Заявка от ${r.name}</div>
+          <div class="request-meta">📧 ${r.email}</div>
+          <div class="request-meta">📝 ${r.reason}</div>
+          <div class="request-meta">📅 ${new Date(r.createdAt).toLocaleDateString()}</div>
+          <div class="request-actions">
+            <button class="btn btn-success btn-sm" onclick="handleModeratorRequest(${r.id}, 'approved')">✅ Принять</button>
+            <button class="btn btn-danger btn-sm" onclick="handleModeratorRequest(${r.id}, 'rejected')">❌ Отклонить</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  const moderators = db.getAllUsers().filter(u => u.role === 'moderator');
+  const modList = document.getElementById('moderatorsList');
+  if (moderators.length === 0) {
+    modList.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Нет назначенных модераторов</p>';
+  } else {
+    modList.innerHTML = moderators.map(u => {
+      const completed = u.tasks.filter(t => t.completed && t.verified);
+      return `
+        <div class="user-card-item">
+          <div class="user-info">
+            <div class="user-avatar">${u.name.split(' ').map(n => n[0]).join('')}</div>
+            <div>
+              <div class="user-name">${u.name} 🔍</div>
+              <div class="user-email">${u.email}</div>
+            </div>
+          </div>
+          <div class="user-stats">
+            <span>⭐ <strong>${u.score}</strong> SC</span>
+            <span>✅ <strong>${completed.length}</strong> заданий</span>
+            <button class="btn btn-danger btn-sm" onclick="removeModerator(${u.id})">🗑️ Уволить</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function renderRating() {
+  const search = document.getElementById('ratingSearch').value.toLowerCase();
+  const allUsers = db.getAllUsers()
+    .filter(u => u.id !== currentUser.id && u.role !== 'owner')
+    .sort((a, b) => b.score - a.score);
+  
+  const filtered = search ? allUsers.filter(u => 
+    u.name.toLowerCase().includes(search) || 
+    u.email.toLowerCase().includes(search)
+  ) : allUsers;
+  
+  const ratingList = document.getElementById('ratingList');
+  if (filtered.length === 0) {
+    ratingList.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Участники не найдены</p>';
+  } else {
+    ratingList.innerHTML = filtered.map((u, index) => {
+      const rank = getRank(u.score);
+      const completed = u.tasks.filter(t => t.completed && t.verified).length;
+      
+      let rankClass = '';
+      let rankEmoji = '';
+      if (index === 0) { rankClass = 'top1'; rankEmoji = '🥇'; }
+      else if (index === 1) { rankClass = 'top2'; rankEmoji = '🥈'; }
+      else if (index === 2) { rankClass = 'top3'; rankEmoji = '🥉'; }
+      
+      return `
+        <div class="user-card-item" onclick="showUserProfile(${u.id})">
+          <div class="user-info">
+            <span class="ranking-badge ${rankClass}">${rankEmoji || (index + 1)}</span>
+            <div class="user-avatar">${u.name.split(' ').map(n => n[0]).join('')}</div>
+            <div>
+              <div class="user-name">${u.name}</div>
+              <div class="user-email">${u.email} • ${rank.emoji} ${rank.name}</div>
+            </div>
+          </div>
+          <div class="user-stats">
+            <span>⭐ <strong>${u.score}</strong> SC</span>
+            <span>✅ <strong>${completed}</strong> заданий</span>
+            <span>📅 <strong>${u.events.length}</strong> заявок</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function renderModeratorRequestStatus() {
+  const statusDiv = document.getElementById('myRequestStatus');
+  if (currentUser.role === 'moderator' || currentUser.role === 'owner') {
+    statusDiv.innerHTML = `
+      <div style="padding:12px;background:rgba(46,204,113,0.06);border-radius:12px;border:1px solid rgba(46,204,113,0.08);">
+        <p style="color:#58d68d;font-size:0.9rem;">✅ Вы уже являетесь модератором или владельцем</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const request = db.getModeratorRequestByUser(currentUser.id);
+  if (!request) {
+    statusDiv.innerHTML = `
+      <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px solid rgba(255,255,255,0.04);">
+        <p style="color:rgba(255,255,255,0.3);font-size:0.9rem;">Вы ещё не подавали заявку на модератора</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let statusText = '';
+  let statusColor = '';
+  let bgColor = '';
+  
+  if (request.status === 'pending') {
+    statusText = '⏳ На рассмотрении';
+    statusColor = '#f1c40f';
+    bgColor = 'rgba(241,196,15,0.06)';
+  } else if (request.status === 'approved') {
+    statusText = '✅ Принята! Вы стали модератором';
+    statusColor = '#58d68d';
+    bgColor = 'rgba(46,204,113,0.06)';
+  } else {
+    statusText = '❌ Отклонена';
+    statusColor = '#ec7063';
+    bgColor = 'rgba(231,76,60,0.06)';
+  }
+  
+  statusDiv.innerHTML = `
+    <div style="padding:12px;background:${bgColor};border-radius:12px;border:1px solid rgba(255,255,255,0.04);">
+      <p style="color:${statusColor};font-weight:600;font-size:0.9rem;">${statusText}</p>
+      <p style="color:rgba(255,255,255,0.3);font-size:0.8rem;margin-top:4px;">📅 Отправлено: ${new Date(request.createdAt).toLocaleDateString()}</p>
+      ${request.status === 'approved' ? `
+        <p style="color:#58d68d;font-size:0.85rem;margin-top:4px;">🎉 Поздравляем! Теперь вы можете модерировать заявки и задания.</p>
+      ` : request.status === 'rejected' ? `
+        <p style="color:#ec7063;font-size:0.85rem;margin-top:4px;">Вы можете подать новую заявку позже.</p>
+      ` : ''}
+    </div>
+  `;
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'approved': '✅ Одобрено',
+    'pending': '⏳ На рассмотрении',
+    'rejected': '❌ Отклонено'
+  };
+  return labels[status] || status;
+}
+
+// ==================== TASK VERIFICATION ====================
+function requestTaskVerification(taskId) {
+  const task = currentUser.tasks.find(t => t.id === taskId);
+  if (!task || task.completed) return;
+  
+  task.completed = true;
+  task.verified = false;
+  updateLastActivity(currentUser);
+  db.updateUser(currentUser);
+  render();
+  showNotification(`📤 Задание "${task.title}" отправлено на проверку`, 'info');
+}
+
+function verifyTask(userId, taskId, approved) {
+  const user = db.getUser(userId);
+  if (!user) return;
+  
+  const task = user.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  
+  if (approved) {
+    task.verified = true;
+    const completed = user.tasks.filter(t => t.completed && t.verified);
+    const totalScore = completed.reduce((sum, t) => sum + t.points, 0);
+    user.score = totalScore;
+    updateLastActivity(user);
+    db.updateUser(user);
+    showNotification(`✅ Задание "${task.title}" подтверждено! +${task.points} SC для ${user.name}`, 'success');
+  } else {
+    task.completed = false;
+    task.verified = false;
+    db.updateUser(user);
+    showNotification(`❌ Задание "${task.title}" отклонено для ${user.name}`, 'warning');
+  }
+  
+  if (userId === currentUser?.id) {
+    currentUser = user;
+  }
+  render();
+}
+
+// ==================== EVENTS ====================
+document.getElementById('eventForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const title = document.getElementById('eventTitle').value.trim();
+  const date = document.getElementById('eventDate').value;
+  const description = document.getElementById('eventDescription').value.trim();
+  
+  if (!title || !date) {
+    showNotification('Пожалуйста, заполните все обязательные поля', 'warning');
+    return;
+  }
+  
+  const newEvent = {
+    id: Date.now(),
+    title,
+    date,
+    description,
+    status: 'pending'
+  };
+  
+  currentUser.events.push(newEvent);
+  updateLastActivity(currentUser);
+  db.updateUser(currentUser);
+  render();
+  this.reset();
+  showNotification(`📅 Заявка на "${title}" отправлена на модерацию`, 'success');
+});
+
+function cancelEvent(eventId) {
+  if (confirm('Отменить заявку?')) {
+    currentUser.events = currentUser.events.filter(e => e.id !== eventId);
+    updateLastActivity(currentUser);
+    db.updateUser(currentUser);
+    render();
+    showNotification('Заявка отменена', 'info');
+  }
+}
+
+// ==================== MODERATION ====================
+function moderateEvent(userId, eventId, status) {
+  const user = db.getUser(userId);
+  if (!user) return;
+  
+  const event = user.events.find(e => e.id === eventId);
+  if (!event) return;
+  
+  event.status = status;
+  updateLastActivity(user);
+  db.updateUser(user);
+  
+  if (userId === currentUser.id) {
+    currentUser = user;
+  }
+  
+  render();
+  showNotification(
+    `📅 Заявка "${event.title}" ${status === 'approved' ? 'одобрена' : 'отклонена'}`,
+    status === 'approved' ? 'success' : 'warning'
+  );
+  
+  if (status === 'approved') {
+    const points = 25;
+    user.score += points;
+    db.updateUser(user);
+    render();
+    showNotification(`🎉 Бонус +${points} Спектр-коинов за участие в мероприятии!`, 'success');
+  }
+}
+
+// ==================== GIVE POINTS ====================
+document.getElementById('givePointsForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const userId = parseInt(document.getElementById('userSelect').value);
+  const amount = parseInt(document.getElementById('pointsAmount').value);
+  const reason = document.getElementById('pointsReason').value.trim() || 'Бонус';
+  
+  if (!userId || !amount || amount < 1) {
+    showNotification('Выберите участника и укажите количество Спектр-коинов', 'warning');
+    return;
+  }
+  
+  const targetUser = db.getUser(userId);
+  if (!targetUser) {
+    showNotification('Пользователь не найден', 'warning');
+    return;
+  }
+  
+  if (targetUser.role === 'owner') {
+    showNotification('❌ Нельзя выдавать баллы владельцу системы', 'warning');
+    return;
+  }
+  
+  targetUser.score += amount;
+  updateLastActivity(targetUser);
+  db.updateUser(targetUser);
+  
+  if (userId === currentUser.id) {
+    currentUser = targetUser;
+  }
+  
+  render();
+  showNotification(`🎁 Пользователю ${targetUser.name} выдано ${amount} Спектр-коинов (${reason})`, 'success');
+  this.reset();
+});
+
+// ==================== PENALTIES ====================
+document.getElementById('penaltyForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const userId = parseInt(document.getElementById('penaltyUserSelect').value);
+  const amount = parseInt(document.getElementById('penaltyAmount').value);
+  const reason = document.getElementById('penaltyReason').value.trim();
+  
+  if (!userId || !amount || amount < 1 || !reason) {
+    showNotification('Пожалуйста, заполните все поля', 'warning');
+    return;
+  }
+  
+  const targetUser = db.getUser(userId);
+  if (!targetUser) {
+    showNotification('Пользователь не найден', 'warning');
+    return;
+  }
+  
+  if (targetUser.role === 'owner') {
+    showNotification('❌ Нельзя наложить штраф на владельца', 'warning');
+    return;
+  }
+  
+  if (targetUser.score < amount) {
+    showNotification(`❌ У пользователя недостаточно баллов (${targetUser.score} SC)`, 'warning');
+    return;
+  }
+  
+  db.createPenalty(userId, amount, reason, currentUser.name);
+  render();
+  this.reset();
+  showNotification(`⚖️ Штраф ${amount} SC наложен на ${targetUser.name} (${reason})`, 'danger');
+});
+
+// ==================== ANNOUNCEMENTS ====================
+document.getElementById('announcementForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const title = document.getElementById('announcementTitle').value.trim();
+  const dateTime = document.getElementById('announcementDateTime').value;
+  const location = document.getElementById('announcementLocation').value.trim();
+  const description = document.getElementById('announcementDescription').value.trim();
+  
+  if (!title || !dateTime) {
+    showNotification('Пожалуйста, заполните название и дату мероприятия', 'warning');
+    return;
+  }
+  
+  db.createAnnouncement(title, dateTime, location, description, currentUser.name);
+  render();
+  this.reset();
+  showNotification('📢 Объявление о мероприятии опубликовано! Все участники увидят его.', 'success');
+  
+  setTimeout(() => {
+    showNotification('🔔 Новое объявление о мероприятии доступно в разделе "Объявления"', 'info');
+  }, 1000);
+});
+
+// ==================== MODERATOR REQUESTS ====================
+document.getElementById('moderatorRequestForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  if (currentUser.role === 'moderator' || currentUser.role === 'owner') {
+    showNotification('Вы уже являетесь модератором или владельцем', 'warning');
+    return;
+  }
+  
+  const existing = db.getModeratorRequestByUser(currentUser.id);
+  if (existing) {
+    showNotification('Вы уже подавали заявку. Ожидайте решения владельца.', 'warning');
+    return;
+  }
+  
+  const name = document.getElementById('requestName').value.trim();
+  const email = document.getElementById('requestEmail').value.trim();
+  const reason = document.getElementById('requestReason').value.trim();
+  
+  if (!name || !email || !reason) {
+    showNotification('Пожалуйста, заполните все поля', 'warning');
+    return;
+  }
+  
+  const existingUser = db.getUserByEmail(email);
+  if (existingUser && existingUser.id !== currentUser.id) {
+    showNotification('Пользователь с таким email уже зарегистрирован', 'warning');
+    return;
+  }
+  
+  db.createModeratorRequest(currentUser.id, name, email, reason);
+  currentUser.role = 'pending-moderator';
+  db.updateUser(currentUser);
+  
+  render();
+  this.reset();
+  showNotification('📨 Заявка на модератора отправлена! Ожидайте решения владельца.', 'success');
+});
+
+function handleModeratorRequest(requestId, status) {
+  const request = db.moderatorRequests.find(r => r.id === requestId);
+  if (!request) {
+    showNotification('Заявка не найдена', 'warning');
+    return;
+  }
+  
+  const user = db.getUser(request.userId);
+  if (!user) {
+    showNotification('Пользователь не найден', 'warning');
+    return;
+  }
+  
+  if (status === 'approved') {
+    user.role = 'moderator';
+    db.updateUser(user);
+    db.updateModeratorRequest(requestId, 'approved');
+    showNotification(`✅ ${user.name} назначен модератором!`, 'success');
+  } else {
+    user.role = 'user';
+    db.updateUser(user);
+    db.updateModeratorRequest(requestId, 'rejected');
+    showNotification(`❌ Заявка ${user.name} отклонена`, 'warning');
+  }
+  
+  if (request.userId === currentUser?.id) {
+    currentUser = user;
+  }
+  render();
+}
+
+function removeModerator(userId) {
+  if (!confirm('Уволить этого модератора?')) return;
+  
+  const user = db.getUser(userId);
+  if (!user) return;
+  
+  user.role = 'user';
+  db.updateUser(user);
+  render();
+  showNotification(`👤 ${user.name} больше не модератор`, 'info');
+}
+
+// ==================== SHOW USER PROFILE ====================
+function showUserProfile(userId) {
+  const user = db.getUser(userId);
+  if (!user) return;
+  
+  const completed = user.tasks.filter(t => t.completed && t.verified);
+  const score = completed.reduce((sum, t) => sum + t.points, 0);
+  const rank = getRank(score);
+  
+  document.getElementById('modalUserAvatar').textContent = user.name.split(' ').map(n => n[0]).join('');
+  document.getElementById('modalUserName').textContent = user.name;
+  document.getElementById('modalUserEmail').textContent = user.email;
+  
+  const role = document.getElementById('modalUserRole');
+  if (user.role === 'moderator') {
+    role.textContent = '🔍 Модератор';
+    role.style.background = 'rgba(241,196,15,0.12)';
+    role.style.color = '#f1c40f';
+  } else if (user.role === 'owner') {
+    role.textContent = '👑 Владелец';
+    role.style.background = 'rgba(231,76,60,0.12)';
+    role.style.color = '#ec7063';
+  } else {
+    role.textContent = '👤 Участник';
+    role.style.background = 'rgba(52,152,219,0.12)';
+    role.style.color = '#5dade2';
+  }
+  
+  document.getElementById('modalUserRank').textContent = `${rank.emoji} ${rank.name}`;
+  document.getElementById('modalUserScore').textContent = user.score;
+  document.getElementById('modalUserTasks').textContent = completed.length;
+  document.getElementById('modalUserEvents').textContent = user.events.length;
+  document.getElementById('modalUserStatus').textContent = user.role === 'owner' ? 'Владелец' : user.role === 'moderator' ? 'Модератор' : 'Активный участник';
+  
+  const now = new Date();
+  const lastAct = new Date(user.lastActivity);
+  const daysInactive = Math.floor((now - lastAct) / (1000 * 60 * 60 * 24));
+  document.getElementById('modalUserBurn').textContent = daysInactive >= 90 ? '🔥 Активно сгорание' : daysInactive >= 60 ? `⚠️ Через ${90 - daysInactive} дней` : '✅ Нет';
+  
+  document.getElementById('userProfileModal').classList.add('active');
+}
+
+// ==================== NOTIFICATIONS ====================
+function showNotification(message, type = 'info') {
+  const container = document.getElementById('notifications');
+  const notif = document.createElement('div');
+  notif.className = `notification ${type}`;
+  notif.innerHTML = `
+    <span>${message}</span>
+    <button class="close" onclick="this.parentElement.remove()">×</button>
+  `;
+  container.prepend(notif);
+  
+  setTimeout(() => {
+    if (notif.parentElement) notif.remove();
+  }, 5000);
+}
+
+// ==================== MODALS ====================
+function showSettings() {
+  document.getElementById('settingsModal').classList.add('active');
+  closeSidebar();
+}
+
+function showSupport() {
+  document.getElementById('supportModal').classList.add('active');
+  closeSidebar();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function toggleSetting(el) {
+  el.classList.toggle('active');
+  showNotification(`⚙️ Настройка обновлена`, 'info');
+}
+
+function sendSupport() {
+  const subject = document.getElementById('supportSubject').value.trim() || 'Без темы';
+  const message = document.getElementById('supportMessage').value.trim();
+  if (!message) {
+    showNotification('Пожалуйста, напишите сообщение', 'warning');
+    return;
+  }
+  showNotification(`💬 Ваше обращение "${subject}" отправлено в поддержку`, 'success');
+  closeModal('supportModal');
+  document.getElementById('supportSubject').value = '';
+  document.getElementById('supportMessage').value = '';
+}
+
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('active');
+  });
+});
+
+// ==================== SEARCH ====================
+document.getElementById('ratingSearch')?.addEventListener('input', renderRating);
+
+// ==================== INIT ====================
+const savedUser = db.getCurrentUser();
+if (savedUser) {
+  currentUser = savedUser;
+  authOverlay.classList.add('hidden');
+  render();
+  showNotification(`👋 С возвращением, ${currentUser.name}!`, 'success');
+} else {
+  authOverlay.classList.remove('hidden');
+  switchAuthMode();
+}
+</script>
+</body>
+</html>
