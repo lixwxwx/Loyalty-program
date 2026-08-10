@@ -1838,20 +1838,15 @@ function confirmDeleteProfile() {
   
   const userId = currentUser.id;
   
-  // Удаляем пользователя из базы
   db.deleteUser(userId);
   
-  // Очищаем текущего пользователя
   currentUser = null;
   db.setCurrentUser(null);
   
-  // Закрываем модальное окно
   closeModal('deleteConfirmModal');
   
-  // Показываем уведомление
   showNotification('🗑️ Ваш профиль успешно удалён', 'danger');
   
-  // Переходим на экран авторизации
   authOverlay.classList.remove('hidden');
   isLoginMode = true;
   switchAuthMode();
@@ -1879,7 +1874,7 @@ function switchAuthMode() {
     authSubmitBtn.textContent = '🔑 Войти';
     authSwitchText.textContent = 'Нет аккаунта?';
     authSwitchLink.textContent = 'Зарегистрироваться';
-    roleSelectGroup.style.display = 'none';
+    roleSelectGroup.style.display = 'block';
   } else {
     authSubmitBtn.textContent = '📝 Зарегистрироваться';
     authSwitchText.textContent = 'Уже есть аккаунт?';
@@ -1909,17 +1904,49 @@ authForm.addEventListener('submit', function(e) {
   }
   
   if (isLoginMode) {
+    // ВХОД
     const user = db.getUserByEmail(email);
     if (!user || user.password !== password) {
       showNotification('Неверный email или пароль', 'warning');
       return;
     }
+    
+    // Проверяем роль при входе
+    if (role === 'owner' && user.role !== 'owner') {
+      showNotification('❌ Этот аккаунт не является владельцем', 'warning');
+      return;
+    }
+    
+    if (role === 'user' && user.role === 'owner') {
+      showNotification('❌ Этот аккаунт доступен только для владельца', 'warning');
+      return;
+    }
+    
+    // Если пользователь выбирает роль владельца, проверяем что это действительно владелец
+    if (role === 'owner') {
+      // Всё хорошо, владелец входит
+      currentUser = user;
+      db.setCurrentUser(user);
+      authOverlay.classList.add('hidden');
+      render();
+      showNotification(`👑 Добро пожаловать, ${user.name}!`, 'success');
+      return;
+    }
+    
+    // Обычный вход
     currentUser = user;
     db.setCurrentUser(user);
     authOverlay.classList.add('hidden');
     render();
     showNotification(`👋 Добро пожаловать, ${user.name}!`, 'success');
+    
   } else {
+    // РЕГИСТРАЦИЯ
+    if (role === 'owner') {
+      showNotification('❌ Регистрация как владелец запрещена', 'warning');
+      return;
+    }
+    
     if (db.getUserByEmail(email)) {
       showNotification('Пользователь с таким email уже существует', 'warning');
       return;
@@ -2061,6 +2088,122 @@ function render() {
   renderModeratorRequestStatus();
 }
 
+// ==================== ОСТАЛЬНЫЕ ФУНКЦИИ ====================
+// [Все функции renderProfile, renderTasks, renderEvents, renderAnnouncements, renderModeration, renderTaskVerification, renderPenaltyHistory, renderOwnerPanel, renderRating, renderModeratorRequestStatus, getStatusLabel, requestTaskVerification, verifyTask, cancelEvent, moderateEvent, givePoints, penalties, announcements, moderatorRequests, showUserProfile, showNotification, modals, settings, support, etc.]
+
+// ==================== SHOW USER PROFILE ====================
+function showUserProfile(userId) {
+  const user = db.getUser(userId);
+  if (!user) return;
+  
+  const completed = user.tasks.filter(t => t.completed && t.verified);
+  const score = completed.reduce((sum, t) => sum + t.points, 0);
+  const rank = getRank(score);
+  
+  document.getElementById('modalUserAvatar').textContent = user.name.split(' ').map(n => n[0]).join('');
+  document.getElementById('modalUserName').textContent = user.name;
+  document.getElementById('modalUserEmail').textContent = user.email;
+  
+  const role = document.getElementById('modalUserRole');
+  if (user.role === 'moderator') {
+    role.textContent = '🔍 Модератор';
+    role.style.background = 'rgba(241,196,15,0.12)';
+    role.style.color = '#f1c40f';
+  } else if (user.role === 'owner') {
+    role.textContent = '👑 Владелец';
+    role.style.background = 'rgba(231,76,60,0.12)';
+    role.style.color = '#ec7063';
+  } else {
+    role.textContent = '👤 Участник';
+    role.style.background = 'rgba(52,152,219,0.12)';
+    role.style.color = '#5dade2';
+  }
+  
+  document.getElementById('modalUserRank').textContent = `${rank.emoji} ${rank.name}`;
+  document.getElementById('modalUserScore').textContent = user.score;
+  document.getElementById('modalUserTasks').textContent = completed.length;
+  document.getElementById('modalUserEvents').textContent = user.events.length;
+  document.getElementById('modalUserStatus').textContent = user.role === 'owner' ? 'Владелец' : user.role === 'moderator' ? 'Модератор' : 'Активный участник';
+  
+  const now = new Date();
+  const lastAct = new Date(user.lastActivity);
+  const daysInactive = Math.floor((now - lastAct) / (1000 * 60 * 60 * 24));
+  document.getElementById('modalUserBurn').textContent = daysInactive >= 90 ? '🔥 Активно сгорание' : daysInactive >= 60 ? `⚠️ Через ${90 - daysInactive} дней` : '✅ Нет';
+  
+  document.getElementById('userProfileModal').classList.add('active');
+}
+
+// ==================== NOTIFICATIONS ====================
+function showNotification(message, type = 'info') {
+  const container = document.getElementById('notifications');
+  const notif = document.createElement('div');
+  notif.className = `notification ${type}`;
+  notif.innerHTML = `
+    <span>${message}</span>
+    <button class="close" onclick="this.parentElement.remove()">×</button>
+  `;
+  container.prepend(notif);
+  
+  setTimeout(() => {
+    if (notif.parentElement) notif.remove();
+  }, 5000);
+}
+
+// ==================== MODALS ====================
+function showSettings() {
+  document.getElementById('settingsModal').classList.add('active');
+  closeSidebar();
+}
+
+function showSupport() {
+  document.getElementById('supportModal').classList.add('active');
+  closeSidebar();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function toggleSetting(el) {
+  el.classList.toggle('active');
+  showNotification(`⚙️ Настройка обновлена`, 'info');
+}
+
+function sendSupport() {
+  const subject = document.getElementById('supportSubject').value.trim() || 'Без темы';
+  const message = document.getElementById('supportMessage').value.trim();
+  if (!message) {
+    showNotification('Пожалуйста, напишите сообщение', 'warning');
+    return;
+  }
+  showNotification(`💬 Ваше обращение "${subject}" отправлено в поддержку`, 'success');
+  closeModal('supportModal');
+  document.getElementById('supportSubject').value = '';
+  document.getElementById('supportMessage').value = '';
+}
+
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('active');
+  });
+});
+
+// ==================== SEARCH ====================
+document.getElementById('ratingSearch')?.addEventListener('input', renderRating);
+
+// ==================== INIT ====================
+const savedUser = db.getCurrentUser();
+if (savedUser) {
+  currentUser = savedUser;
+  authOverlay.classList.add('hidden');
+  render();
+  showNotification(`👋 С возвращением, ${currentUser.name}!`, 'success');
+} else {
+  authOverlay.classList.remove('hidden');
+  switchAuthMode();
+}
+
+// ==================== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ====================
 function renderProfile(rank) {
   const completed = currentUser.tasks.filter(t => t.completed && t.verified);
   const totalScore = completed.reduce((sum, t) => sum + t.points, 0);
@@ -2544,7 +2687,6 @@ function getStatusLabel(status) {
   return labels[status] || status;
 }
 
-// ==================== TASK VERIFICATION ====================
 function requestTaskVerification(taskId) {
   const task = currentUser.tasks.find(t => t.id === taskId);
   if (!task || task.completed) return;
@@ -2585,35 +2727,6 @@ function verifyTask(userId, taskId, approved) {
   render();
 }
 
-// ==================== EVENTS ====================
-document.getElementById('eventForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  
-  const title = document.getElementById('eventTitle').value.trim();
-  const date = document.getElementById('eventDate').value;
-  const description = document.getElementById('eventDescription').value.trim();
-  
-  if (!title || !date) {
-    showNotification('Пожалуйста, заполните все обязательные поля', 'warning');
-    return;
-  }
-  
-  const newEvent = {
-    id: Date.now(),
-    title,
-    date,
-    description,
-    status: 'pending'
-  };
-  
-  currentUser.events.push(newEvent);
-  updateLastActivity(currentUser);
-  db.updateUser(currentUser);
-  render();
-  this.reset();
-  showNotification(`📅 Заявка на "${title}" отправлена на модерацию`, 'success');
-});
-
 function cancelEvent(eventId) {
   if (confirm('Отменить заявку?')) {
     currentUser.events = currentUser.events.filter(e => e.id !== eventId);
@@ -2624,7 +2737,6 @@ function cancelEvent(eventId) {
   }
 }
 
-// ==================== MODERATION ====================
 function moderateEvent(userId, eventId, status) {
   const user = db.getUser(userId);
   if (!user) return;
@@ -2655,7 +2767,77 @@ function moderateEvent(userId, eventId, status) {
   }
 }
 
-// ==================== GIVE POINTS ====================
+function removeModerator(userId) {
+  if (!confirm('Уволить этого модератора?')) return;
+  
+  const user = db.getUser(userId);
+  if (!user) return;
+  
+  user.role = 'user';
+  db.updateUser(user);
+  render();
+  showNotification(`👤 ${user.name} больше не модератор`, 'info');
+}
+
+function handleModeratorRequest(requestId, status) {
+  const request = db.moderatorRequests.find(r => r.id === requestId);
+  if (!request) {
+    showNotification('Заявка не найдена', 'warning');
+    return;
+  }
+  
+  const user = db.getUser(request.userId);
+  if (!user) {
+    showNotification('Пользователь не найден', 'warning');
+    return;
+  }
+  
+  if (status === 'approved') {
+    user.role = 'moderator';
+    db.updateUser(user);
+    db.updateModeratorRequest(requestId, 'approved');
+    showNotification(`✅ ${user.name} назначен модератором!`, 'success');
+  } else {
+    user.role = 'user';
+    db.updateUser(user);
+    db.updateModeratorRequest(requestId, 'rejected');
+    showNotification(`❌ Заявка ${user.name} отклонена`, 'warning');
+  }
+  
+  if (request.userId === currentUser?.id) {
+    currentUser = user;
+  }
+  render();
+}
+
+document.getElementById('eventForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const title = document.getElementById('eventTitle').value.trim();
+  const date = document.getElementById('eventDate').value;
+  const description = document.getElementById('eventDescription').value.trim();
+  
+  if (!title || !date) {
+    showNotification('Пожалуйста, заполните все обязательные поля', 'warning');
+    return;
+  }
+  
+  const newEvent = {
+    id: Date.now(),
+    title,
+    date,
+    description,
+    status: 'pending'
+  };
+  
+  currentUser.events.push(newEvent);
+  updateLastActivity(currentUser);
+  db.updateUser(currentUser);
+  render();
+  this.reset();
+  showNotification(`📅 Заявка на "${title}" отправлена на модерацию`, 'success');
+});
+
 document.getElementById('givePointsForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -2692,7 +2874,6 @@ document.getElementById('givePointsForm').addEventListener('submit', function(e)
   this.reset();
 });
 
-// ==================== PENALTIES ====================
 document.getElementById('penaltyForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -2727,7 +2908,6 @@ document.getElementById('penaltyForm').addEventListener('submit', function(e) {
   showNotification(`⚖️ Штраф ${amount} SC наложен на ${targetUser.name} (${reason})`, 'danger');
 });
 
-// ==================== ANNOUNCEMENTS ====================
 document.getElementById('announcementForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -2751,7 +2931,6 @@ document.getElementById('announcementForm').addEventListener('submit', function(
   }, 1000);
 });
 
-// ==================== MODERATOR REQUESTS ====================
 document.getElementById('moderatorRequestForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -2789,161 +2968,6 @@ document.getElementById('moderatorRequestForm').addEventListener('submit', funct
   this.reset();
   showNotification('📨 Заявка на модератора отправлена! Ожидайте решения владельца.', 'success');
 });
-
-function handleModeratorRequest(requestId, status) {
-  const request = db.moderatorRequests.find(r => r.id === requestId);
-  if (!request) {
-    showNotification('Заявка не найдена', 'warning');
-    return;
-  }
-  
-  const user = db.getUser(request.userId);
-  if (!user) {
-    showNotification('Пользователь не найден', 'warning');
-    return;
-  }
-  
-  if (status === 'approved') {
-    user.role = 'moderator';
-    db.updateUser(user);
-    db.updateModeratorRequest(requestId, 'approved');
-    showNotification(`✅ ${user.name} назначен модератором!`, 'success');
-  } else {
-    user.role = 'user';
-    db.updateUser(user);
-    db.updateModeratorRequest(requestId, 'rejected');
-    showNotification(`❌ Заявка ${user.name} отклонена`, 'warning');
-  }
-  
-  if (request.userId === currentUser?.id) {
-    currentUser = user;
-  }
-  render();
-}
-
-function removeModerator(userId) {
-  if (!confirm('Уволить этого модератора?')) return;
-  
-  const user = db.getUser(userId);
-  if (!user) return;
-  
-  user.role = 'user';
-  db.updateUser(user);
-  render();
-  showNotification(`👤 ${user.name} больше не модератор`, 'info');
-}
-
-// ==================== SHOW USER PROFILE ====================
-function showUserProfile(userId) {
-  const user = db.getUser(userId);
-  if (!user) return;
-  
-  const completed = user.tasks.filter(t => t.completed && t.verified);
-  const score = completed.reduce((sum, t) => sum + t.points, 0);
-  const rank = getRank(score);
-  
-  document.getElementById('modalUserAvatar').textContent = user.name.split(' ').map(n => n[0]).join('');
-  document.getElementById('modalUserName').textContent = user.name;
-  document.getElementById('modalUserEmail').textContent = user.email;
-  
-  const role = document.getElementById('modalUserRole');
-  if (user.role === 'moderator') {
-    role.textContent = '🔍 Модератор';
-    role.style.background = 'rgba(241,196,15,0.12)';
-    role.style.color = '#f1c40f';
-  } else if (user.role === 'owner') {
-    role.textContent = '👑 Владелец';
-    role.style.background = 'rgba(231,76,60,0.12)';
-    role.style.color = '#ec7063';
-  } else {
-    role.textContent = '👤 Участник';
-    role.style.background = 'rgba(52,152,219,0.12)';
-    role.style.color = '#5dade2';
-  }
-  
-  document.getElementById('modalUserRank').textContent = `${rank.emoji} ${rank.name}`;
-  document.getElementById('modalUserScore').textContent = user.score;
-  document.getElementById('modalUserTasks').textContent = completed.length;
-  document.getElementById('modalUserEvents').textContent = user.events.length;
-  document.getElementById('modalUserStatus').textContent = user.role === 'owner' ? 'Владелец' : user.role === 'moderator' ? 'Модератор' : 'Активный участник';
-  
-  const now = new Date();
-  const lastAct = new Date(user.lastActivity);
-  const daysInactive = Math.floor((now - lastAct) / (1000 * 60 * 60 * 24));
-  document.getElementById('modalUserBurn').textContent = daysInactive >= 90 ? '🔥 Активно сгорание' : daysInactive >= 60 ? `⚠️ Через ${90 - daysInactive} дней` : '✅ Нет';
-  
-  document.getElementById('userProfileModal').classList.add('active');
-}
-
-// ==================== NOTIFICATIONS ====================
-function showNotification(message, type = 'info') {
-  const container = document.getElementById('notifications');
-  const notif = document.createElement('div');
-  notif.className = `notification ${type}`;
-  notif.innerHTML = `
-    <span>${message}</span>
-    <button class="close" onclick="this.parentElement.remove()">×</button>
-  `;
-  container.prepend(notif);
-  
-  setTimeout(() => {
-    if (notif.parentElement) notif.remove();
-  }, 5000);
-}
-
-// ==================== MODALS ====================
-function showSettings() {
-  document.getElementById('settingsModal').classList.add('active');
-  closeSidebar();
-}
-
-function showSupport() {
-  document.getElementById('supportModal').classList.add('active');
-  closeSidebar();
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
-}
-
-function toggleSetting(el) {
-  el.classList.toggle('active');
-  showNotification(`⚙️ Настройка обновлена`, 'info');
-}
-
-function sendSupport() {
-  const subject = document.getElementById('supportSubject').value.trim() || 'Без темы';
-  const message = document.getElementById('supportMessage').value.trim();
-  if (!message) {
-    showNotification('Пожалуйста, напишите сообщение', 'warning');
-    return;
-  }
-  showNotification(`💬 Ваше обращение "${subject}" отправлено в поддержку`, 'success');
-  closeModal('supportModal');
-  document.getElementById('supportSubject').value = '';
-  document.getElementById('supportMessage').value = '';
-}
-
-document.querySelectorAll('.modal').forEach(modal => {
-  modal.addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('active');
-  });
-});
-
-// ==================== SEARCH ====================
-document.getElementById('ratingSearch')?.addEventListener('input', renderRating);
-
-// ==================== INIT ====================
-const savedUser = db.getCurrentUser();
-if (savedUser) {
-  currentUser = savedUser;
-  authOverlay.classList.add('hidden');
-  render();
-  showNotification(`👋 С возвращением, ${currentUser.name}!`, 'success');
-} else {
-  authOverlay.classList.remove('hidden');
-  switchAuthMode();
-}
 </script>
 </body>
 </html>
